@@ -189,7 +189,7 @@ def handle(update):
         user_states[chat_id] = {}
         send(chat_id,
             f"გამარჯობა {name}! 👋\n\n"
-            "მე ვარ <b>ზოოMARTI-ს ასისტენტი</b>.\n"
+            "მე ვარ <b>ზოომარტის ასისტენტი</b>.\n"
             "აირჩიე პრობლემა ან მომიყევი რა გაქვს! 🛠",
             keyboard=main_keyboard()
         )
@@ -208,7 +208,7 @@ def handle(update):
 
     if text == "✅ კი, მოაგვარა!":
         send(chat_id,
-            "🎉 კარგია! გაგვიმარჯა!\n\nსხვა პრობლემა თუ გაქვს — მომწერე!",
+            "🎉 კარგია! \n\nსხვა პრობლემა თუ გაქვს — მომწერე!",
             keyboard=main_keyboard()
         )
         return
@@ -233,7 +233,7 @@ def handle(update):
         send(chat_id, DEFAULT_ANSWER, keyboard=main_keyboard())
 
 def main():
-    print("✅ ZooMARTI ბოტი გაეშვა!")
+    print("✅ ზოომარტის ბოტი გაეშვა!")
     last_id = 0
     while True:
         try:
