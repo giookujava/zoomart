@@ -267,7 +267,7 @@ def get_ganrigi_today():
         working, leave = [], []
         for s in bdata["staff"]:
             status = s["schedule"][day] if day < len(s["schedule"]) else "OFF"
-            name = s["name"].split()[0]
+            name = s["name"].strip()
             if status == "FULL":
                 working.append(name)
             elif status not in ["OFF", ""]:
