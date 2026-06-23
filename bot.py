@@ -50,17 +50,7 @@ ANSWERS = {
 
 ❓ მოაგვარე?""",
 
-    "კარტრიჯი": """🖋 კარტრიჯის პრობლემა:
-
-თუ ბეჭდვა გამქრალია ან ღია ფერისაა:
-1. გახსენი პრინტერი
-2. კარტრიჯი ამოიღე
-3. ქაღალდის პირსახოცით გაწმინდე
-4. ჩადე ახლიდან
-
-⚠️ თუ კარტრიჯი ბოლოვდება — ტექნიკოსი უნდა შეცვალოს.
-
-❓ მოაგვარე?""",
+    "კარტრიჯი": "KARTRIDJI_SPECIAL",
 
     "ინტერნეტი": """🌐 ინტერნეტის პრობლემა:
 
@@ -180,12 +170,11 @@ def branch_keyboard():
 def main_keyboard():
     return {
         "keyboard": [
-            ["🖨 პრინტერი არ მუშაობს", "🌐 ინტერნეტი არ მუშაობს"],
-            ["💳 POS არ მუშაობს", "🖋 კარტრიჯი"],
+            ["🖨 პრინტერი", "🌐 ინტერნეტი"],
+            ["🖥 POS", "🖋 კარტრიჯის დატუმბვა"],
             ["📷 სკანერი", "💳 ბარათის წამკითხველი"],
-            ["📇 ჩეკის პრინტერი", "💻 კომპიუტერი"],
-            ["🖱 მაუსი", "⌨️ კლავიატურა"],
-            ["📞 ტექნიკოსი"]
+            ["📇 ჩეკის პრინტერი", "🖱 მაუსი"],
+            ["⌨️ კლავიატურა", "📞 ტექნიკოსი"]
         ],
         "resize_keyboard": True
     }
@@ -246,6 +235,36 @@ def get_stats_text():
 
     return text
 
+FIREBASE_PROJECT = "zoomart-92bc1"
+FIREBASE_API_KEY = "AIzaSyB-_jS9QeaNycYLp-km7ZbDJgQ8d__jjiM"
+
+def add_firebase_ticket(branch, problem, description=""):
+    """Firebase REST API-ით ticket-ის დამატება zm_tickets კოლექციაში"""
+    import time as _time
+    url = (f"https://firestore.googleapis.com/v1/projects/{FIREBASE_PROJECT}"
+           f"/databases/(default)/documents/zm_tickets?key={FIREBASE_API_KEY}")
+    now = datetime.now()
+    payload = {
+        "fields": {
+            "branch":      {"stringValue": branch},
+            "problem":     {"stringValue": problem},
+            "description": {"stringValue": description},
+            "status":      {"stringValue": "new"},
+            "source":      {"stringValue": "telegram_bot"},
+            "created_at":  {"integerValue": str(int(_time.time() * 1000))},
+            "timestamp":   {"stringValue": now.strftime("%d/%m/%Y %H:%M")},
+        }
+    }
+    body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+    req = urllib.request.Request(url, data=body,
+                                 headers={"Content-Type": "application/json; charset=utf-8"})
+    try:
+        urllib.request.urlopen(req, timeout=10)
+        return True
+    except Exception as e:
+        print(f"Firebase error: {e}")
+        return False
+
 def notify_admin(name, chat_id, branch, problem):
     msg = (f"🚨 <b>ტექნიკოსი საჭიროა!</b>\n\n"
            f"<b>ფილიალი:</b> {branch}\n"
@@ -264,7 +283,7 @@ def find_answer(text):
     if "პრინტერ" in t and "კარტრიჯ" not in t and "ჩეკ" not in t:
         return ANSWERS["პრინტერი"], "პრინტერი"
     if "კარტრიჯ" in t:
-        return ANSWERS["კარტრიჯი"], "კარტრიჯი"
+        return ANSWERS["კარტრიჯი"], "კარტრიჯის დატუმბვა"
     if "ინტერნეტ" in t or "internet" in t:
         return ANSWERS["ინტერნეტი"], "ინტერნეტი"
     if "pos" in t or "ქასსა" in t:
@@ -400,7 +419,20 @@ def handle(update):
 
     # Find answer
     answer, problem_type = find_answer(text)
-    if answer:
+    if answer == "KARTRIDJI_SPECIAL":
+        # კარტრიჯის დატუმბვა — ticket საიტზე + ადმინს შეტყობინება
+        user_states[chat_id]["problem"] = "კარტრიჯის დატუმბვა"
+        update_stats(branch, "კარტრიჯის დატუმბვა")
+        add_firebase_ticket(branch, "კარტრიჯის დატუმბვა")
+        notify_admin(name, chat_id, branch, "კარტრიჯის დატუმბვა")
+        send(chat_id,
+            f"🖋 <b>კარტრიჯის დატუმბვა</b>\n\n"
+            f"შეტყობინება გაიგზავნა ტექნიკოსთან! ✅\n"
+            f"ფილიალი: <b>{branch}</b>\n\n"
+            f"ტექნიკოსი მოვა კარტრიჯის დასატუმბად.",
+            keyboard={"keyboard": [["🔄 თავიდან"]], "resize_keyboard": True}
+        )
+    elif answer:
         user_states[chat_id]["problem"] = problem_type
         update_stats(branch, problem_type)
         send(chat_id, answer, keyboard=yes_no_keyboard())
