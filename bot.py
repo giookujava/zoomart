@@ -2,9 +2,7 @@ import json
 import urllib.request
 import time
 import os
-import threading
 from datetime import datetime
-from http.server import HTTPServer, BaseHTTPRequestHandler
 
 TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN", "8767153160:AAGor3JL1WhGbsIQ-byCaV3VRwmOHl4zqG0")
 ADMIN_CHAT_ID = os.environ.get("ADMIN_CHAT_ID", "1746687858")
@@ -22,24 +20,33 @@ BRANCHES = [
 ANSWERS = {
     "პრინტერი": """🖨 პრინტერის პრობლემა:
 
-1. შეამოწმე USB კაბელი — გამოაერთე და შეაერთე ახლიდან
-2. გადატვირთე პრინტერი — გამორთე და 30 წამში ჩართე
-3. შეამოწმე კარტრიჯი — გახსენი და ჩადე ახლიდან
-4. კომპიუტერი გადატვირთე
+შეამოწმე:
+• ქაღალდი დევს თუ არა პრინტერში
+• ქაღალდი სწორად არის ჩადებული და გვერდითი დამჭერები მიბჯენილია თუ არა
+• შიგნით გაჭედილი ფურცელი ხომ არ არის
+• ამოიღე კარტრიჯი და თავიდან ჩადე
+• გახსენი და დახურე წინა/ზედა სახურავი
+• გამორთე პრინტერი 30 წამით და ხელახლა ჩართე
+• პრინტერიდან მომავალი USB კაბელი რითაც შეერთებულია მონიტორში გამოაერთე და შეაერთე თავიდან
+• დენის კაბელი გამორთე და სხვა ცარიელ ადგილას გადააერთე
+• გადატვირთე პრინტერი — გამორთე და 30 წამში ჩართე
+• კომპიუტერი გადატვირთე ამ ყველაფრის მერე ბოლოს
 
 ❓ მოაგვარე?""",
 
     "სკანერი": """📷 სკანერის პრობლემა:
 
-1. გამოაერთე USB და თავიდან შეაერთე
-2. თუ კიდევ არ მუშაობს გადააერთე სხვა USB პორტში
+შეამოწმე:
+• გამოაერთე USB და თავიდან შეაერთე
+• თუ კიდევ არ მუშაობს გადააერთე სხვა USB პორტში
 
 ❓ მოაგვარე?""",
 
-    "ბარათის წამკითხველი": """💳 ბარათის წამკითხველის პრობლემა:
+    "ბარათის წამკითხველი": """💳 ბარათის წამკითხველი:
 
-1. გამოაერთე USB და თავიდან შეაერთე
-2. თუ კიდევ არ მუშაობს გადააერთე სხვა USB პორტში
+შეამოწმე:
+• გამოაერთე USB და თავიდან შეაერთე
+• თუ კიდევ არ მუშაობს გადააერთე სხვა USB პორტში
 
 ❓ მოაგვარე?""",
 
@@ -57,33 +64,31 @@ ANSWERS = {
 
     "ინტერნეტი": """🌐 ინტერნეტის პრობლემა:
 
-1. როუტერი გამორთე (შავი ღილაკი)
-2. 30 წამი დაელოდე
-3. ჩართე ახლიდან
-4. 1 წუთი დაელოდე
-
-თუ მაინც არ მუშაობს:
-5. შეამოწმე კაბელი — მონიტორის ქვეშ გამოაძრე და თავიდან შეაერთე
-6. კომპიუტერი გადატვირთე
+შეამოწმე:
+• ცადე თუ უკავშირდები ზოომარტის wifi-ს ტელეფონზე
+• როუტერი გადატვირთე (გამოაძრე შავი კაბელი 30 წამი დაელოდე და ჩართე თავიდან)
+• შეამოწმე (თეთრი) ინტერნეტის კაბელი მონიტორის ქვეშ გამოაძრე და შეაერთე თავიდან (შეერთების დროს მწვანედ და ყვითლად უნდა ანათებდეს)
 
 ❓ მოაგვარე?""",
 
-    "ჩეკის პრინტერი": """📇 ჩეკის პრინტერის პრობლემა:
+    "ჩეკის პრინტერი": """📇 დეტალური პრინტერის პრობლემა:
 
-1. პრინტერი გამორთე და ჩართე ახლიდან
-2. შეამოწმე უკან კაბელი — გამოაძრე და შეაერთე თავიდან
-3. შეამოწმე დენი — გამოაძრე და ჩართე თავიდან
-4. თერმული ქაღალდი შეამოწმე — ჩადე სწორად
-5. შეამოწმე USB კაბელი — გამოაძრე და შეაერთე თავიდან
+შეამოწმე:
+• პრინტერი გამორთე და ჩართე ახლიდან
+• შეამოწმე უკან კაბელი — გამოაძრე და შეაერთე თავიდან
+• შეამოწმე დენი — გამოაძრე და ჩართე თავიდან
+• თერმული ქაღალდი შეამოწმე — ჩადე სწორად და გაასუფთავე შეიძლება მტვერი ედოს
+• შეამოწმე USB კაბელი — გამოაძრე და შეაერთე თავიდან
 
 ❓ მოაგვარე?""",
 
-    "pos": """💳 POS-ის პრობლემა:
+    "pos": """🖥 POS-ის პრობლემა:
 
-1. POS გამორთე და ჩართე ახლიდან
-2. შეამოწმე ინტერნეტი — Wi-Fi ან კაბელი
-3. შეამოწმე დამტენი — ბატარეა ხომ არ გათავდა
-4. თერმული ქაღალდი შეამოწმე — ჩადე სწორად
+შეამოწმე:
+• მონიტორის ქვეშ POS-ის კაბელი ხომ არ არის გამომძვრალი (გამოაერთე და შეაერთე)
+• თუ შუქი ჩაქვრა და ავარიულად გაითიშა კომპიუტერი დენის წყაროდან გამოაერთე და სხვაგან შეაერთე
+• შეამოწმე POS-ის კაბელის ბლოკი კაბელი ხომ არ არის გამომძვრალი
+• თუ POS-ზე გამოაქ განსხვავებული გამოსახულება და არ ირთვება დაუკავშირდი ტექნიკოს
 
 ❓ მოაგვარე?""",
 
@@ -113,25 +118,23 @@ ANSWERS = {
 4. სხვა მოწყობილობა WiFi-ს ხედავს?
 
 ❓ მოაგვარე?""",
+
+    "მაუსი": """🖱 მაუსი:
+
+შეამოწმე:
+• გამოაერთე USB და თავიდან შეაერთე
+• თუ კიდევ არ მუშაობს გადააერთე სხვა USB პორტში
+
+❓ მოაგვარე?""",
+
+    "კლავიატურა": """⌨️ კლავიატურა:
+
+შეამოწმე:
+• გამოაერთე USB და თავიდან შეაერთე
+• თუ კიდევ არ მუშაობს გადააერთე სხვა USB პორტში
+
+❓ მოაგვარე?""",
 }
-
-# ── Ticket log (in-memory, survives restarts via pickle if needed) ──
-tickets = []
-ticket_lock = threading.Lock()
-
-def log_ticket(branch, problem, status, user_name):
-    """Log a completed ticket. status: 'solved' | 'technician' | 'escalated'"""
-    with ticket_lock:
-        tickets.append({
-            "id": len(tickets) + 1,
-            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M"),
-            "date": datetime.now().strftime("%Y-%m-%d"),
-            "branch": branch,
-            "problem": problem,
-            "status": status,
-            "user": user_name
-        })
-    print(f"[TICKET] #{len(tickets)} {branch} | {problem} | {status} | {user_name}")
 
 # Statistics storage
 stats = {
@@ -144,50 +147,6 @@ stats = {
 }
 
 user_states = {}
-
-# ── HTTP Server ──
-class TicketHandler(BaseHTTPRequestHandler):
-    def do_GET(self):
-        if self.path in ('/tickets', '/tickets/'):
-            with ticket_lock:
-                data = json.dumps(tickets, ensure_ascii=False).encode('utf-8')
-            self.send_response(200)
-            self.send_header('Content-Type', 'application/json; charset=utf-8')
-            self.send_header('Access-Control-Allow-Origin', '*')
-            self.send_header('Cache-Control', 'no-cache')
-            self.end_headers()
-            self.wfile.write(data)
-        elif self.path in ('/stats', '/stats/'):
-            with ticket_lock:
-                data = json.dumps(stats, ensure_ascii=False).encode('utf-8')
-            self.send_response(200)
-            self.send_header('Content-Type', 'application/json; charset=utf-8')
-            self.send_header('Access-Control-Allow-Origin', '*')
-            self.end_headers()
-            self.wfile.write(data)
-        elif self.path in ('/', '/health'):
-            self.send_response(200)
-            self.send_header('Content-Type', 'text/plain')
-            self.end_headers()
-            self.wfile.write(b'ZooMARTI Bot OK')
-        else:
-            self.send_response(404)
-            self.end_headers()
-
-    def do_OPTIONS(self):
-        self.send_response(200)
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Access-Control-Allow-Methods', 'GET, OPTIONS')
-        self.end_headers()
-
-    def log_message(self, format, *args):
-        pass  # suppress default HTTP logs
-
-def start_http_server():
-    port = int(os.environ.get("PORT", 8080))
-    server = HTTPServer(('0.0.0.0', port), TicketHandler)
-    print(f"✅ HTTP server on port {port}")
-    server.serve_forever()
 
 def tg(method, data):
     url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/{method}"
@@ -225,6 +184,7 @@ def main_keyboard():
             ["💳 POS არ მუშაობს", "🖋 კარტრიჯი"],
             ["📷 სკანერი", "💳 ბარათის წამკითხველი"],
             ["📇 ჩეკის პრინტერი", "💻 კომპიუტერი"],
+            ["🖱 მაუსი", "⌨️ კლავიატურა"],
             ["📞 ტექნიკოსი"]
         ],
         "resize_keyboard": True
@@ -259,8 +219,10 @@ def update_stats(branch, problem, solved=None, escalated=False):
 def get_stats_text():
     today = datetime.now().strftime("%Y-%m-%d")
     today_data = stats["today"].get(today, {"total": 0, "solved": 0, "escalated": 0})
+
     top_branches = sorted(stats["by_branch"].items(), key=lambda x: x[1], reverse=True)[:5]
     top_problems = sorted(stats["by_problem"].items(), key=lambda x: x[1], reverse=True)[:5]
+
     text = (f"📊 <b>სტატისტიკა</b>\n\n"
             f"<b>დღეს ({today}):</b>\n"
             f"• სულ მიმართვა: {today_data['total']}\n"
@@ -270,15 +232,18 @@ def get_stats_text():
             f"• სულ: {stats['total']}\n"
             f"• გადაიჭრა: {stats['solved']}\n"
             f"• ტექნიკოსი: {stats['escalated']}\n\n")
+
     if top_branches:
         text += "<b>🏆 Top ფილიალები:</b>\n"
         for b, c in top_branches:
             text += f"• {b}: {c}\n"
         text += "\n"
+
     if top_problems:
         text += "<b>🔧 ხშირი პრობლემები:</b>\n"
         for p, c in top_problems:
             text += f"• {p}: {c}\n"
+
     return text
 
 def notify_admin(name, chat_id, branch, problem):
@@ -310,12 +275,17 @@ def find_answer(text):
         return ANSWERS["ეკრანი"], "ეკრანი"
     if "wifi" in t or "wi-fi" in t or "ვაიფაი" in t:
         return ANSWERS["wifi"], "wifi"
+    if "მაუს" in t:
+        return ANSWERS["მაუსი"], "მაუსი"
+    if "კლავიატურ" in t:
+        return ANSWERS["კლავიატურა"], "კლავიატურა"
     return None, None
 
 
-STAFF_DATA = {"აქსისი": {"manager": "ლაშა", "staff": [{"name": "ელენე ბლიაძე", "schedule": ["OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF"]}, {"name": "მონიკა ყალიჩავა", "schedule": ["FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF"]}, {"name": "მარიამ მოსახლიშვილი", "schedule": ["FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL"]}, {"name": "საბა ზაზაშვილი", "schedule": ["OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL"]}, {"name": "ნიკოლოზ ქემაშვილი", "schedule": ["OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL"]}]}, "ბაგები": {"manager": "ლაშა", "staff": [{"name": "მარიამ დეკანოიძე", "schedule": ["OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL"]}, {"name": "ლუკა ჭიალაშვილი", "schedule": ["FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF"]}]}}
+STAFF_DATA = {"აქსისი": {"manager": "ლაშა", "staff": [{"name": "ელენე ბლიაძე", "schedule": ["OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF"]}, {"name": "მონიკა ყალიჩავა", "schedule": ["FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF"]}, {"name": "მარიამ მოსახლიშვილი", "schedule": ["FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL"]}, {"name": "საბა ზაზაშვილი", "schedule": ["OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL"]}, {"name": "ნიკოლოზ ქემაშვილი", "schedule": ["OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL"]}]}, "ბაგები": {"manager": "ლაშა", "staff": [{"name": "მარიამ დეკანოიძე", "schedule": ["OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL"]}, {"name": "ლუკა ჭიალაშვილი", "schedule": ["FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF"]}]}, "დოლიძე": {"manager": "ლაშა", "staff": [{"name": "ლიკა ჩადუნელი", "schedule": ["FULL", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF"]}, {"name": "ნათია ხაჩიძე", "schedule": ["H.D", "H.D", "H.D", "H.D", "H.D", "H.D", "H.D", "H.D", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL"]}]}, "ვაკე": {"manager": "ლაშა", "staff": [{"name": "ბექა ქურდაძე", "schedule": ["OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF"]}, {"name": "მარიამ მენაღარიშვილი", "schedule": ["OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF"]}, {"name": "ეკა ფიფია", "schedule": ["FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL"]}, {"name": "ანა დევნოზაშვილი", "schedule": ["OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL"]}]}, "ვაჟა": {"manager": "ლაშა", "staff": [{"name": "მარიამ ზაალიშვილი", "schedule": ["OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF"]}, {"name": "ნინო ფარქოსაძე", "schedule": ["FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF"]}, {"name": "ლევან ბარამიძე", "schedule": ["OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL"]}]}, "კარტოზია": {"manager": "ლაშა", "staff": [{"name": "მარიამ ქურდაძე", "schedule": ["OFF", "FULL", "FULL", "OFF", "FULL", "FULL", "OFF", "FULL", "FULL", "OFF", "FULL", "FULL", "OFF", "FULL", "FULL", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL"]}, {"name": "თემური კაპანაძე", "schedule": ["FULL", "OFF", "FULL", "FULL", "OFF", "FULL", "FULL", "OFF", "FULL", "FULL", "OFF", "FULL", "FULL", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF"]}, {"name": "ნიკა ყაჭაშვილი", "schedule": ["FULL", "FULL", "OFF", "FULL", "FULL", "OFF", "FULL", "FULL", "OFF", "FULL", "FULL", "OFF", "FULL", "FULL", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF"]}, {"name": "ნია ხონელიძე", "schedule": ["OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL"]}, {"name": "თამარა ხუციშვილი", "schedule": ["FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF"]}]}, "ლისი 1": {"manager": "ლაშა", "staff": [{"name": "გვანცა ჯიმშიტაშვილი", "schedule": ["OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL"]}, {"name": "თამარ მაისურაძე", "schedule": ["FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF"]}]}, "ნუცუბიძე 1": {"manager": "ლაშა", "staff": [{"name": "ნატო ჯაჯაინიძე", "schedule": ["OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL"]}, {"name": "თამარ ნამგალაური", "schedule": ["FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF"]}]}, "ნუცუბიძე 2": {"manager": "ლაშა", "staff": [{"name": "ილია დარჯანია", "schedule": ["FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL"]}, {"name": "ნინი აფციაური", "schedule": ["OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF"]}]}, "ქუთათელაძე": {"manager": "ლაშა", "staff": [{"name": "მიხეილი ყველაშვილი", "schedule": ["OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF"]}, {"name": "თინათინ ბოგვერაძე", "schedule": ["FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF"]}, {"name": "ანი ხუჭუა", "schedule": ["FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL"]}, {"name": "ნინი ლაზარაევი", "schedule": ["OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL"]}]}, "ყიფშიძე": {"manager": "ლაშა", "staff": [{"name": "თაზო აბესაძე", "schedule": ["FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL"]}, {"name": "ქეთევან გელაშვილი", "schedule": ["OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF"]}]}, "ჯიქია": {"manager": "ლაშა", "staff": [{"name": "ანა ჭალიძე", "schedule": ["OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL"]}, {"name": "ნინი ხაჩიძე", "schedule": ["OFF", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF"]}, {"name": "ნინო ქობალია", "schedule": ["FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "OFF", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL"]}]}, "აგლაძე": {"manager": "აკაკი", "staff": [{"name": "ნინი სოზიაშვილი", "schedule": ["FULL", "FULL", "OFF", "FULL", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "P.L", "P.L", "P.L", "P.L", "P.L", "P.L", "P.L", "P.L", "P.L", "P.L", "P.L", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF"]}, {"name": "კესო გამახარია", "schedule": ["H.D", "H.D", "H.D", "H.D", "H.D", "H.D", "H.D", "H.D", "H.D", "H.D", "H.D", "H.D", "H.D", "H.D", "H.D", "H.D", "H.D", "H.D", "H.D", "H.D", "H.D", "H.D", "H.D", "H.D", "H.D", "H.D", "H.D", "H.D", "OFF", "OFF"]}]}, "ავჭალა": {"manager": "აკაკი", "staff": [{"name": "გვანცა ზაქრაძე", "schedule": ["OFF", "H.D", "H.D", "H.D", "H.D", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL"]}, {"name": "ელენე ჯამელაშვილი", "schedule": ["FULL", "OFF", "FULL", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF"]}]}, "ბელიაშვილი": {"manager": "აკაკი", "staff": [{"name": "ნანა ღაჭავა", "schedule": ["OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF"]}, {"name": "ელენე ბობოხიძე", "schedule": ["FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL"]}]}, "გლდანი": {"manager": "აკაკი", "staff": [{"name": "მარიამ კაიშაური", "schedule": ["OFF", "OFF", "P.L", "P.L", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "P.L", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF"]}, {"name": "სოფო წიკლაური", "schedule": ["FULL", "FULL", "FULL", "FULL", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL"]}]}, "გუდვილი": {"manager": "აკაკი", "staff": [{"name": "ელენე ფიფია", "schedule": ["P.L", "P.L", "P.L", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF"]}, {"name": "თათია ელიავა", "schedule": ["FULL", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL"]}, {"name": "სალომე გოგალაძე", "schedule": ["OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF"]}, {"name": "ნატალი ბაშარული", "schedule": ["FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL"]}]}, "დადიანი": {"manager": "აკაკი", "staff": [{"name": "ნინი მარგველაშვილი", "schedule": ["OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "H.D", "H.D", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL"]}, {"name": "სოფო სუხიტაშვილი", "schedule": ["FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF"]}]}, "დიდი დიღომი": {"manager": "აკაკი", "staff": [{"name": "გიორგი გოგილაშვილი", "schedule": ["FULL", "FULL", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "P.L", "P.L", "P.L", "P.L", "P.L", "P.L", "P.L", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL"]}, {"name": "ნია ჩიხლაძე", "schedule": ["OFF", "OFF", "H.D", "H.D", "H.D", "H.D", "H.D", "H.D", "H.D", "H.D", "H.D", "H.D", "H.D", "H.D", "H.D", "H.D", "H.D", "H.D", "H.D", "H.D", "H.D", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF"]}]}, "თავდადებული": {"manager": "აკაკი", "staff": [{"name": "გვანცა ბულაური", "schedule": ["FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF"]}, {"name": "მარიამ პოპიაშვილი", "schedule": ["OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "U.L", "P.L", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL"]}]}, "თემქა": {"manager": "აკაკი", "staff": [{"name": "საბა დულუზაური", "schedule": ["OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL"]}, {"name": "თეკლა ციცქიშვილი", "schedule": ["FULL", "OFF", "OFF", "U.L", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF"]}]}, "ივერთუბანი": {"manager": "აკაკი", "staff": [{"name": "სალომე ელიკაშვილი", "schedule": ["OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL"]}, {"name": "ბესო ჭუმბურიძე", "schedule": ["FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF"]}]}, "ლისი 2": {"manager": "აკაკი", "staff": [{"name": "თათული რუსაძე", "schedule": ["FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF"]}, {"name": "მარიამ ფოლადაშვილი", "schedule": ["OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL"]}, {"name": "ლიზი ბურძენიძე", "schedule": ["FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL"]}]}, "დიღმის მასივი": {"manager": "აკაკი", "staff": [{"name": "თინათინ ბადალაშვილი", "schedule": ["OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "P.L", "P.L"]}, {"name": "სალომე ჯოხთაბერიძე", "schedule": ["FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL"]}, {"name": "ანი ჩოხელი", "schedule": ["OFF", "FULL", "OFF", "FULL", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL"]}]}, "საგურამო": {"manager": "აკაკი", "staff": [{"name": "ანეტა ფუტკარაძე", "schedule": ["OFF", "OFF", "FULL", "FULL", "FULL", "FULL", "P.L", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF"]}, {"name": "თამარი თელია", "schedule": ["FULL", "FULL", "OFF", "OFF", "P.L", "P.L", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL"]}]}, "სანზონა": {"manager": "აკაკი", "staff": [{"name": "მარიამ იურისონოვი", "schedule": ["FULL", "FULL", "OFF", "FULL", "FULL", "FULL", "FULL", "FULL", "FULL", "OFF", "OFF", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF"]}]}, "სოფელი დიღომი": {"manager": "აკაკი", "staff": [{"name": "თათა მგელაძე", "schedule": ["OFF", "OFF", "FULL", "FULL", "OFF", "FULL", "FULL", "FULL", "OFF", "FULL", "FULL", "FULL", "FULL", "FULL", "OFF", "OFF", "OFF", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "OFF", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF"]}, {"name": "ანა ქობულაშვილი", "schedule": ["FULL", "FULL", "OFF", "OFF", "FULL", "OFF", "OFF", "OFF", "FULL", "OFF", "OFF", "OFF", "OFF", "OFF", "FULL", "FULL", "FULL", "OFF", "FULL", "OFF", "OFF", "FULL", "OFF", "FULL", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL"]}]}, "ვაზისუბანი": {"manager": "ნიკა", "staff": [{"name": "მარი ჩერნიკოვი", "schedule": ["OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF"]}, {"name": "ნათელა თხილაძე", "schedule": ["FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "P.L", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF"]}, {"name": "გიორგი ფხოველიშვილი", "schedule": ["OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF"]}]}, "ვარკეთილი": {"manager": "ნიკა", "staff": [{"name": "მეგი სამადაშვილი", "schedule": ["FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "P.L", "P.L", "P.L", "P.L", "P.L", "P.L", "P.L", "P.L", "P.L", "P.L", "P.L", "P.L", "P.L", "P.L", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL"]}, {"name": "თაკო გაფრინდაშვილი", "schedule": ["OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "FULL", "OFF", "FULL", "FULL", "FULL", "FULL", "OFF", "FULL", "FULL", "OFF", "FULL", "FULL", "FULL", "OFF", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF"]}]}, "იოსებიძე": {"manager": "ნიკა", "staff": [{"name": "ნუცა ყურაშვილი", "schedule": ["FULL", "OFF", "OFF", "FULL", "FULL", "FULL", "FULL", "FULL", "FULL", "OFF", "OFF", "U.L", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF"]}, {"name": "თეკლე გრიგალაშვილი", "schedule": ["OFF", "FULL", "FULL", "H.D", "H.D", "H.D", "H.D", "H.D", "H.D", "H.D", "H.D", "H.D", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF"]}]}, "ისანი": {"manager": "ნიკა", "staff": [{"name": "ნათია აბაშიძე", "schedule": ["OFF", "H.D", "H.D", "H.D", "H.D", "H.D", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF"]}, {"name": "თაკო გოგიბერიძე", "schedule": ["FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL"]}]}, "კრწანისი": {"manager": "ნიკა", "staff": [{"name": "მათე გობეჯიშვილი", "schedule": ["FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF"]}, {"name": "გურამ მარგველაშვილი", "schedule": ["OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL"]}]}, "მოზაიკა": {"manager": "ნიკა", "staff": [{"name": "ანი კობახიძე", "schedule": ["OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "P.L", "P.L", "P.L", "P.L", "P.L", "P.L", "P.L", "P.L", "P.L", "P.L", "P.L", "P.L"]}, {"name": "დავით ჭიკაიძე", "schedule": ["FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "FULL", "FULL", "OFF", "FULL", "FULL", "OFF", "FULL", "FULL", "OFF", "FULL", "FULL"]}]}, "ონიაშვილი": {"manager": "ნიკა", "staff": [{"name": "ქეთი ნიკოლაშვილი", "schedule": ["OFF", "OFF", "FULL", "FULL", "FULL", "OFF", "FULL", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF"]}, {"name": "ნუცი გელანტია", "schedule": ["OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL"]}]}, "ორთაჭალა": {"manager": "ნიკა", "staff": [{"name": "თამუნა შენგელია", "schedule": ["FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL"]}, {"name": "მზექალა გიგაური", "schedule": ["FULL", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF"]}, {"name": "დავით ჭანტურია", "schedule": ["P.L", "P.L", "P.L", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF"]}]}, "სამგორი": {"manager": "ნიკა", "staff": [{"name": "სოფო ზარდიაშვილი", "schedule": ["OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL"]}, {"name": "ლიკა გირგვლიანი", "schedule": ["OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF"]}]}, "სოლოლაკი": {"manager": "ნიკა", "staff": [{"name": "ნესტანი სხულუხია", "schedule": ["OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL"]}, {"name": "ვერიკო ლომიძე", "schedule": ["FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF"]}]}, "შინდისი": {"manager": "ნიკა", "staff": [{"name": "ნინო მელაძე", "schedule": ["FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF"]}, {"name": "მარიამ დარახველიძე", "schedule": ["OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL"]}]}, "წყნეთი": {"manager": "ნიკა", "staff": [{"name": "თამთა პეტრიაშვილი", "schedule": ["OFF", "FULL", "FULL", "OFF", "FULL", "FULL", "OFF", "FULL", "FULL", "FULL", "OFF", "FULL", "FULL", "OFF", "FULL", "FULL", "FULL", "OFF", "FULL", "OFF", "OFF", "FULL", "FULL", "FULL", "OFF", "FULL", "FULL", "OFF", "FULL", "FULL"]}]}, "ბათუმი": {"manager": "ბექა", "staff": [{"name": "გიორგი კოპლატაძე", "schedule": ["FULL", "FULL", "OFF", "FULL", "FULL", "OFF", "FULL", "FULL", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL"]}, {"name": "დაჩი არძენაძე", "schedule": ["OFF", "FULL", "FULL", "OFF", "FULL", "FULL", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF"]}, {"name": "მარიამ ნაკაშიძე", "schedule": ["P.L", "P.L", "P.L", "P.L", "P.L", "P.L", "P.L", "P.L", "P.L", "P.L", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF"]}]}, "ბათუმი 2": {"manager": "ბექა", "staff": [{"name": "ვაკო კვირკველია", "schedule": ["OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL"]}, {"name": "ნინო შენგელია", "schedule": ["FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF", "OFF", "FULL", "FULL", "OFF"]}]}}
 
 def get_ganrigi_today():
+    from datetime import datetime
     today = datetime.now()
     day = today.day - 1
     date_str = today.strftime("%d/%m/%Y")
@@ -393,12 +363,11 @@ def handle(update):
 
     branch = state.get("branch", "უცნობი")
 
-    # Technician request
+    # Technician
     if text == "📞 ტექნიკოსი":
         problem = state.get("problem", "უცნობი პრობლემა")
         notify_admin(name, chat_id, branch, problem)
         update_stats(branch, problem, escalated=True)
-        log_ticket(branch, problem, "technician", name)
         send(chat_id,
             f"📞 <b>ტექნიკოსთან დასაკავშირებლად დააჭირე:</b>\n\n"
             f"<a href=\"https://t.me/g20goku\">👨‍🔧 ტექნიკოსი — @g20goku</a>\n\n"
@@ -409,21 +378,18 @@ def handle(update):
 
     # Solved
     if text == "✅ კი, მოაგვარა!":
-        problem = state.get("problem", "უცნობი")
-        update_stats(branch, problem, solved=True)
-        log_ticket(branch, problem, "solved", name)
+        update_stats(branch, state.get("problem"), solved=True)
         send(chat_id,
             "🎉 კარგია! გაგვიმარჯა!\n\nსხვა პრობლემა თუ გაქვს — მომწერე!",
             keyboard=main_keyboard()
         )
         return
 
-    # Not solved → escalate
+    # Not solved
     if text == "❌ არა, ვერ მოაგვარა":
         problem = state.get("problem", "უცნობი პრობლემა")
         notify_admin(name, chat_id, branch, problem)
         update_stats(branch, problem, escalated=True)
-        log_ticket(branch, problem, "escalated", name)
         send(chat_id,
             f"⚠️ გასაგებია! პირდაპირ მიწერე ტექნიკოსს:\n\n"
             f"<a href=\"https://t.me/g20goku\">👨‍🔧 ტექნიკოსი — @g20goku</a>\n\n"
@@ -447,10 +413,6 @@ def handle(update):
         )
 
 def main():
-    # Start HTTP server in background thread
-    t = threading.Thread(target=start_http_server, daemon=True)
-    t.start()
-
     print("✅ ZooMARTI ბოტი გაეშვა!")
     last_id = 0
     while True:
