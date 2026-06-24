@@ -4,7 +4,7 @@ import time
 import os
 from datetime import datetime
 
-TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN", "8767153160:AAGor3JL1WhGbsIQ-byCaV3VRwmOHl4zqG0")
+TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN", "8767153160:AAEEUYwz5-f9tivtqH38OVW5JKObg3irjD8")
 ADMIN_CHAT_ID = os.environ.get("ADMIN_CHAT_ID", "1746687858")
 
 BRANCHES = [
